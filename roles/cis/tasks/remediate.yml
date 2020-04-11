@@ -1,0 +1,22 @@
+---
+- block:
+  - name: Remediate
+    lineinfile:
+     path: /etc/modprobe.d/CIS.conf
+     line: install cramfs /bin/true 
+     insertbefore: BOF
+     create: yes
+    
+  - name: remove the module
+    shell: rmmod cramfs
+    ignore_errors: true
+    register: removemod
+
+  - name: set fact
+    set_fact: 
+     remediate_process: true
+    when: removemod.stderr.find('cramfs is not currently loaded') != -1 or removemod.rc == 0
+  when: remediate_cramfs|bool == True or remediate_sys is defined
+  tags:
+  - remediate
+

@@ -1,0 +1,110 @@
+---
+- name: Validate the cram mod 
+  shell: modprobe -v -n cramfs
+  register: mod_stat
+  failed_when: false
+  ignore_errors: true
+  when: ansible_distribution == "RedHat"
+  tags:
+  - audit
+
+
+- name: Validate the lsmod command
+  shell: lsmod | grep -i cramfs
+  register: mod_stat1
+  failed_when: false
+  ignore_errors: true
+  when: ansible_distribution == "RedHat"
+  tags: 
+  - audit
+
+- name: Validate the filesystem
+  lineinfile:
+   path: /etc/filesystems
+   regex: ^cramfs
+   state: absent
+   backup: yes
+  register: cramfs_stat
+  when: ansible_distribution == "RedHat"
+  tags:
+  - audit
+  
+
+- name: Debug
+  debug: 
+   msg: "{{item}}"
+  with_items:
+  - "{{mod_stat.stdout}}"
+  - "{{mod_stat1.rc}}"
+
+- block:
+ 
+  - name: set facts if non complaint
+    set_fact:
+     remediate_cramfs: true
+    when: mod_stat.stdout.find('cramfs') != -1 or mod_stat1.rc == 0
+
+  - name: set facts if complaint
+    set_fact:
+     remediate_cramfs: false
+    when: mod_stat.stdout.find('cramfs') == -1 and mod_stat1.rc == 1
+  
+  - name: display the fact
+    debug:
+     msg: "{{remediate_cramfs|bool}}"
+  when: ansible_distribution == "RedHat"
+  tags:
+  - audit
+
+- name: debug
+  debug: 
+  msg: remediate_cramfs is {{remediate_cramfs}}
+
+- name: Log_file_for_PASS
+  blockinfile: 
+   path: /home/vel/reports/cis-1.1.1.1-audit-log.txt
+   block: "1.1.1.1 Ensure cramfs file system is disabled: PASS"
+   marker: "<!-- {mark} CIFS AUDITING AND REMEDIATION -->"
+  ignore_errors: true
+  register: file_copy
+  when: remediate_cramfs|bool == False
+  tags: 
+  - audit
+  
+- name: Log_file_for_FAIL
+  blockinfile: 
+   path: /home/vel/reports/cis-1.1.1.1-audit-log.txt
+   block: "1.1.1.1 Ensure cramfs file system is disabled: FAIL"
+   marker: "<!-- {mark} CIFS AUDITING AND REMEDIATION -->"
+  ignore_errors: true
+  register: file_copy_1
+  when: remediate_cramfs|bool == True
+  tags: 
+  - audit
+ 
+#- name: Log_file_for_PASS
+#- name: Log_file_for_PASS
+#  lineinfile:
+#   path: /home/vel/reports/cis-1.1.1.1-audit-log.txt
+#   line: "1.1.1.1 Ensure cramfs file system is disabled: PASS"
+#   create: yes
+#   insertafter: EOF
+#   #regexp: ^1.1.1.1
+#  ignore_errors: true
+#  register: file_copy
+#  when: remediate_cramfs|bool == False
+#  tags:
+#  - audit
+#
+#- name: Log_file_for_FAIL
+#  lineinfile:
+#   path: /home/vel/reports/cis-1.1.1.1-audit-log.txt
+#   line: "1.1.1.1 Ensure cramfs file system is disabled: FAIL"
+#   create: yes
+#   insertafter: EOF
+#   #regexp: ^1.1.1.1
+#  ignore_errors: true
+#  register: file_copy_1
+#  when: remediate_cramfs|bool == True
+#  tags:
+#  - audit

@@ -1,0 +1,11 @@
+---
+- name: fetch the logfiles
+  fetch: 
+   src: /home/vel/reports/cis-1.1.1.1-audit-log.txt
+   dest: /home/vel/reports/{{ansible_hostname}}-cis-1.1.1.1-audit-log.txt
+   flat: yes
+   
+
+- name: scp the logfiles
+  shell: rsync -e ssh -avh /home/vel/reports/{{ansible_hostname}}-cis-1.1.1.1-audit-log.txt database:/home/vel/reports/
+  delegate_to: localhost

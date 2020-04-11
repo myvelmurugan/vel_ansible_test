@@ -1,0 +1,19 @@
+---
+# tasks file for cis
+- name: include the audit_file
+  include_tasks: audit.yml
+
+
+- name: Run Remediation
+  include_tasks: remediate.yml
+  when: remediate_cramfs|bool == True or remediate_own is defined
+
+- name: Revalidation
+  include_tasks: audit.yml
+  when: (remediate_process|bool == True or remediate_cramfs|bool == True)
+  ignore_errors: true
+
+- name: Fetch and send the files
+  include_tasks: fetch.yml
+  when: file_copy is defined or file_copy_1 is defined
+  

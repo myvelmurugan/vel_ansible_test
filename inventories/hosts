@@ -1,0 +1,6 @@
+[web]
+webserver
+[db]
+database
+[app]
+application

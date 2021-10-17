@@ -1,0 +1,6 @@
+aws rds describe-db-instances --profile dev-admin | jq '[ .DBInstances[] | (.Endpoint.Address + " " + .DBInstanceIdentifier + " " + .DBInstanceClass + " " + (.AllocatedStorage|tostring) + " " + (.Backup
+RetentionPeriod|tostring) )]'
+aws ec2 describe-snapshots --profile prod-admin --filter Name=volume-id,Values="vol-07305fb2990eb05f9"  | jq '[ .Snapshots[] | (.SnapshotId + " " +  .VolumeId + " " + (.VolumeSize|tostring) )]'
+aws rds describe-db-snapshots --snapshot-type manual --query "length(*[].{DBSnapshots:SnapshotType})" --region eu-central-1
+aws rds describe-db-snapshots --snapshot-type automated  --db-instance-identifier  alpha-db-cloud --profile dev-admin  | jq  '.DBSnapshots[] | ( .DBSnapshotIdentifier + " " + .DBInstanceIdentifier + " "
++ .SnapshotType )'
